@@ -1,7 +1,10 @@
 "use client";
 
+// useState to manage component handling: button press to update counter, update username variable, etc.
 import { useState } from "react";
 import styles from "./page.module.css";
+
+// useEffect to handle event listeners (scrolling), data fetching, updating doc title, etc. 
 import { useEffect } from "react";
 import {
   MultipleChoiceQuestion,
@@ -11,18 +14,30 @@ import { TextQuestion, printQuestion } from "./interfaces/TextQuestion";
 import FileIn from "./components/FileIn/fileIn";
 import { Problem, printThing, printThingAnswers } from "./types/Problem";
 import QuizSection from "./components/Quiz/QuizSection";
+
+// imports jsPDF class from "jspdf" library
+// allows you to create and modify PDF documents
 import { jsPDF } from "jspdf";
 
 export default function Home() {
+
+  // declares a state variable "topic" and function "setTopic" to update topic state
+  // useState is the React Hook, showing topic is initially an empty string
+  // const = reference to the array structure [topic, setTopic] cannot change
+  // ex: [topic, setTopic] = useState("newTopic"); would cause error
   const [topic, setTopic] = useState("");
+
   const [content, setContent] = useState("");
   const [questionType, setQuestionType] = useState("");
+
+  // Problem[] represents an array of Problems, initially empty array
   const [problems, setProblems] = useState<Problem[]>([]); // Update the state type
   const [solutions, setSolutions] = useState("");
   const [userAnswers, setUserAnswers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // if default quiz is not hidden, it will show user the default style output (1 mcq and 1 short answer Q) 
   useEffect(() => {
     const hideDefaultQuiz = process.env.NEXT_PUBLIC_HIDE_DEFAULT_QUIZ || "1";
     if (hideDefaultQuiz === "0") {
@@ -48,14 +63,17 @@ export default function Home() {
     setLoading(true);
     setError("");
 
+    // console.log is for testing purposes
     console.log(prompt, setFunction);
 
     try {
+      // await = pausing execution of code until fetch operation is complete
       const response = await fetch("https://bonai.dobany.com/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        // makes sure prompt is in json formatted string before being sent
         body: JSON.stringify({ question: prompt }),
       });
 
@@ -84,9 +102,12 @@ export default function Home() {
   }
 
   async function handleGenerateProblems() {
+
+    // from  user
     if (topic == "" && content == "") {
       return setError("Please enter a topic or upload a pdf");
     }
+    //variable declaration
     var prompt = `
     Create two short practice problem for the following topic: ${topic},
     the question type is ${questionType}. 
@@ -119,23 +140,31 @@ export default function Home() {
         The JSON response:`;
     console.log(prompt);
 
+    // handleGeneration function called. Generates problems based on prompt
     handleGeneration(prompt, setUpQuiz);
   }
-  const setUpQuiz = (responseOjbect: any) => {
-    setProblems(JSON.parse(responseOjbect));
+
+  // constant variable = arrow function with responseObject
+  const setUpQuiz = (responseObject: any) => {
+    setProblems(JSON.parse(responseObject));
   };
 
+  
   const handleAnswerChange = (index: any, value: any) => {
     setUserAnswers({ ...userAnswers, [index]: value });
   };
 
+  // bug fixed
   const handleRestart = () => {
     setProblems([]);
     setUserAnswers([]);
     setSolutions("");
+    setTopic("");
+    setContent("");
   };
 
-  // Function to render the spinner
+  // Function to render the spinner (will be used to show that the generation is loading)
+  // eg. Generating... 
   const Spinner = () => {
     return (
       <div className={styles.spinner}></div>
@@ -143,6 +172,8 @@ export default function Home() {
   };
 
   const handleSubmit = () => {
+
+    // Get an array of [index, answer] pairs from the userAnswers object
     const userAnswersEntries = Object.entries(userAnswers);
     console.log("User Answers:", userAnswersEntries);
     console.log(
@@ -150,6 +181,7 @@ export default function Home() {
       problems.map((problem) => problem.question)
     );
 
+    // formatted text string for user answers and questions
     const userAnswersText = userAnswersEntries
       .map(([index, answer]) => `Answer ${parseInt(index) + 1}: ${answer}`)
       .join(", ");
@@ -166,10 +198,14 @@ export default function Home() {
 
   const setReview = (responseOjbect: any) => {
     console.log(responseOjbect);
+    // format text for HTML rendering 
     console.log(responseOjbect.replace("Answer", "<br />Answer"));
     setSolutions(responseOjbect.replace("Answer", "<br />Answer"));
   };
+
   const downloadQuestionsPDF = () => {
+
+    // result is a string variable
     var result: string = "Questions:\n\n";
     problems.forEach((item) => {
       result = result + "\n" + printThing(item);
@@ -177,7 +213,12 @@ export default function Home() {
 
     const doc = new jsPDF();
     const text = result; // Replace with your text
+
+    // splits content into an array of strings, each of which fits within 180 units
+    // done so content fits within the PDF page width 
     const split_text = doc.splitTextToSize(text, 180);
+
+    // adds content to position (10, 10)
     doc.text(split_text, 10, 10);
 
     // Save the PDF in a Blob and open it in a new window
@@ -212,6 +253,7 @@ export default function Home() {
           <h1 className={styles.mainTitle}>Probloom</h1>
           <p className={styles.subtitle}>Let Your Problems Blossom</p>
         </div>
+        {/* if error is true, it renders p with error message */}
         {error && <p className={styles.error}>{error}</p>}
         {(!problems || problems.length == 0) && (
           <div className={styles.inputDiv}>

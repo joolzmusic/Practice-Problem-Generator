@@ -2,12 +2,15 @@ import React from 'react';
 import { Problem } from '../../types/Problem';
 import styles from './styles.module.css'
 
+// QuizSectionProps is a Typescript type
 type QuizSectionProps = {
     problems: Problem[];
     userAnswers: string[];
     handleAnswerChange: (index: number, value: string) => void;
-};
+}; 
 
+// functional component named QuizSection
+// Accepts props of type QuizSectionProps and uses destructuring to extract individual props
 const QuizSection: React.FC<QuizSectionProps> = ({ problems, userAnswers, handleAnswerChange }) => {
   return (      
     <div id="quizSection" className={styles.quizSection}>
@@ -60,4 +63,6 @@ const QuizSection: React.FC<QuizSectionProps> = ({ problems, userAnswers, handle
   );
 };
 
+// Export the QuizSection component as the default export of this module. 
+// It can now be imported and used in other parts of the application.
 export default QuizSection;
